@@ -2,10 +2,18 @@
 // (runtime-only or standalone) has been set in webpack.base.conf with an alias.
 import Vue from 'vue'
 import App from './App'
-import router from './router'
+import router from './router/index.js'
 
 import ElementUI from 'element-ui'
 import '../node_modules/element-ui/lib/theme-chalk/index.css'
+
+// 引入样式
+import './assets/css/base.css'
+
+// 引入axios配置文件
+import myAxios from './plugin/myAxios.js'
+
+Vue.use(myAxios)
 
 // 关闭开发模式
 Vue.config.productionTip = false
