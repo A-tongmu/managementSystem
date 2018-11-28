@@ -108,13 +108,14 @@ export default {
             this.$router.push({name:'login'})
         }
     },
-    mounted () {
-        var loginedMsg=localStorage.getItem('token')
+    beforeCreate () {
+      var loginedMsg=localStorage.getItem('token')
         if(!loginedMsg){
             this.$message.error('请登录后访问')
             this.$router.push({name:'login'})
         }
-        
+    }
+    ,mounted () {
 
     }
 }

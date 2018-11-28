@@ -13,7 +13,16 @@ import './assets/css/base.css'
 // 引入axios配置文件
 import myAxios from './plugin/myAxios.js'
 
+// 引入moment
+import moment from 'moment'
+
 Vue.use(myAxios)
+Vue.use(moment)
+
+// 处理时间过滤器
+Vue.filter('fmtdate',(v)=>{
+  return moment(v).format('YYYY-MM-DD')
+})
 
 // 关闭开发模式
 Vue.config.productionTip = false
