@@ -16,7 +16,7 @@
             v-model="query"
             class="input-with-select users_search"
             @clear="clearWords()"
-            >
+          >
             <el-button slot="append" icon="el-icon-search" @click="searchUser()"></el-button>
           </el-input>
           <el-button type="success" plain @click="addUserShow()">添加用户</el-button>
@@ -54,16 +54,27 @@
           <template slot-scope="scope">
             <el-row>
               <!-- 编辑 -->
-              <el-button plain size="mini" type="primary" icon="el-icon-edit" circle
-              @click="editUserShow(scope.row.id)"></el-button>
+              <el-button
+                plain
+                size="mini"
+                type="primary"
+                icon="el-icon-edit"
+                circle
+                @click="editUserShow(scope.row.id)"
+              ></el-button>
               <!-- 删除 -->
-              <el-button 
-              plain size="mini" type="danger" icon="el-icon-delete" circle 
-              @click="delUser(scope.row.id)">
-              </el-button>
+              <el-button
+                plain
+                size="mini"
+                type="danger"
+                icon="el-icon-delete"
+                circle
+                @click="delUser(scope.row.id)"
+              ></el-button>
 
-              <!-- 设置权限 -->
-              <el-button plain size="mini" type="success" icon="el-icon-check" circle></el-button>
+              <!-- 分配角色 -->
+              <el-button plain size="mini" type="success" icon="el-icon-check" circle
+              @click="rolsShow(scope.row.id)"></el-button>
             </el-row>
           </template>
         </el-table-column>
@@ -82,8 +93,7 @@
     ></el-pagination>
 
     <!-- 添加用户页面 -->
-    <el-dialog title="添加用户" 
-    :visible.sync="dialogAddFormVisible">
+    <el-dialog title="添加用户" :visible.sync="dialogAddFormVisible">
       <el-form :model="form" label-position="right">
         <el-form-item label="用户名" :label-width="formLabelWidth">
           <el-input v-model="form.username" autocomplete="off"></el-input>
@@ -106,12 +116,10 @@
     </el-dialog>
 
     <!-- 编辑用户页面 -->
-    <el-dialog title="编辑用户" 
-    :visible.sync="dialogEditFormVisible"
-    >
+    <el-dialog title="编辑用户" :visible.sync="dialogEditFormVisible">
       <el-form :model="form" label-position="right">
         <el-form-item label="用户名" :label-width="formLabelWidth">
-          <el-input :disabled="disabled"  v-model="form.username" autocomplete="off"></el-input>
+          <el-input :disabled="disabled" v-model="form.username" autocomplete="off"></el-input>
         </el-form-item>
         <el-form-item label="邮箱" :label-width="formLabelWidth">
           <el-input v-model="form.email" autocomplete="off"></el-input>
@@ -125,9 +133,31 @@
         <el-button @click="dialogEditFormVisible = false">取 消</el-button>
         <el-button type="primary" @click="editUser()">确 定</el-button>
       </div>
-    </el-dialog>    
+    </el-dialog>
 
-
+    <!-- 分配角色 -->
+    <el-dialog title="分配角色" :visible.sync="dialogRolFormVisible">
+      <el-form :model="form1">
+        <el-form-item label="用户名" :label-width="formLabelWidth">
+          {{form1.username}}
+        </el-form-item>
+        <el-form-item label="角色" :label-width="formLabelWidth">
+          <el-select v-model="form1.rid">
+            <el-option disabled label="请选择" :value="-1"></el-option>
+            <!-- 角色列表 -->
+            <el-option v-for="(item,i) in roleList" :label="item.roleName" 
+            :value="item.id" 
+            :key="i">
+            </el-option>
+            
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="dialogRolFormVisible = false">取 消</el-button>
+        <el-button type="primary" @click="disRole()">确 定</el-button>
+      </div>
+    </el-dialog>
   </el-card>
 </template>
 
@@ -146,34 +176,42 @@ export default {
       // 显示添加弹出框
       dialogAddFormVisible: false,
       dialogEditFormVisible: false,
+      dialogRolFormVisible:false,
       form: {
         username: "",
-        password:"",
-        email:"",
-        mobile:""
+        password: "",
+        email: "",
+        mobile: ""
       },
-      formLabelWidth:"80px",
+      formLabelWidth: "80px",
       // 搜索框禁用
-      disabled:true,
+      disabled: true,
       // 编辑用户id
-      editUserId:-1
+      editUserId: -1,
+
+      // 分配角色form1表单
+      form1:{
+        rid:-1
+      },
+      // 角色列表
+      roleList:[],
+      
     };
   },
 
   methods: {
     // 更改每页的条数，触发函数
     handleSizeChange(val) {
-      console.log(`每页 ${val} 条`)
-      this.pagesize = val
+      console.log(`每页 ${val} 条`);
+      this.pagesize = val;
       // 显示第一页
-      this.pagenum = 1
-      this.getUsers()
-
+      this.pagenum = 1;
+      this.getUsers();
     },
     // 点击每一页面触发函数
     handleCurrentChange(val) {
-      console.log(`当前页: ${val}`)
-      this.pagenum = val
+      console.log(`当前页: ${val}`);
+      this.pagenum = val;
       this.getUsers();
     },
 
@@ -192,27 +230,26 @@ export default {
           this.pagesize
         }`
       );
-      console.log(res);
+      // console.log(res);
       const {
         meta: { msg, status },
         data
       } = res.data;
       if (status == 200) {
         // 如果当前页面没有用户信息，页面前一页，解决删除问题
-        if(data.users.length==0){
-          --this.pagenum
-          this.getUsers()
+        if (data.users.length == 0) {
+          --this.pagenum;
+          this.getUsers();
         }
         this.tableData = data.users;
         this.total = data.total;
-
       }
     },
 
     // 修改状态
     async changeStatus(type, id) {
       const res = await this.$axios.put(`users/${id}/state/${type}`);
-      console.log(res);
+      // console.log(res);
       const {
         meta: { msg, status }
       } = res.data;
@@ -225,100 +262,130 @@ export default {
 
     // 显示添加用户
     addUserShow() {
-      this.dialogAddFormVisible = true
+      this.dialogAddFormVisible = true;
       // this.form={}
       for (const key in this.form) {
         if (this.form.hasOwnProperty(key)) {
-          this.form[key]='';
+          this.form[key] = "";
         }
       }
     },
     // 添加用户
-    addUser(){
-        this.dialogAddFormVisible = false;
-        this.$axios.post('users',this.form)
-        .then((res)=>{
-            console.log(res)
-            const {meta:{msg,status}}=res.data
-            if(status==201){
-                this.$message.success(msg)
-                this.getUsers()
-                this.form={}
-            } else {
-                this.$message.error(msg)
-            }
-
-        })
+    addUser() {
+      this.dialogAddFormVisible = false;
+      this.$axios.post("users", this.form).then(res => {
+        // console.log(res);
+        const {
+          meta: { msg, status }
+        } = res.data;
+        if (status == 201) {
+          this.$message.success(msg);
+          this.getUsers();
+          this.form = {};
+        } else {
+          this.$message.error(msg);
+        }
+      });
     },
     // 显示用户编辑页
-    async editUserShow(id){
-      
-      const res = await this.$axios.get(`users/${id}`)
-      console.log(res)
-      const {meta:{msg,status},data}=res.data
-      if(status==200){
-        this.form.username=data.username
-        this.form.email=data.email
-        this.form.mobile=data.mobile
-        this.editUserId=id
+    async editUserShow(id) {
+      const res = await this.$axios.get(`users/${id}`);
+      // console.log(res);
+      const {
+        meta: { msg, status },
+        data
+      } = res.data;
+      if (status == 200) {
+        this.form.username = data.username;
+        this.form.email = data.email;
+        this.form.mobile = data.mobile;
+        this.editUserId = id;
       }
-      this.dialogEditFormVisible=true
+      this.dialogEditFormVisible = true;
     },
     // 用户编辑
-    async editUser(){
-      const res = await this.$axios.put(`users/${this.editUserId}`,this.form)
-      console.group(`更新成功响应数据:`)
+    async editUser() {
+      const res = await this.$axios.put(`users/${this.editUserId}`, this.form);
+      // console.group(`更新成功响应数据:`);
+      // console.log(res);
+      const {
+        meta: { msg, status }
+      } = res.data;
+      if (status == 200) {
+        this.$message.success(msg);
+        this.dialogEditFormVisible = false;
+        this.getUsers();
+      } else {
+        this.$message.error(msg);
+      }
+    },
+
+    // 搜索用户
+    searchUser() {
+      this.getUsers();
+    },
+    // 清空搜索关键字
+    clearWords() {
+      this.query = "";
+      this.getUsers();
+    },
+    // 删除用户
+    delUser(id) {
+      this.$confirm("此操作将永久删除该文件, 是否继续?", "提示", {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning"
+      })
+        .then(async () => {
+          const res = await this.$axios.delete(`users/${id}`);
+          const {
+            meta: { msg, status }
+          } = res.data;
+          console.log(status);
+          if (status == 200) {
+            this.$message({
+              type: "success",
+              message: "删除成功!"
+            });
+            // 更新页面
+            this.getUsers();
+          }
+        })
+        .catch(() => {
+          this.$message({
+            type: "info",
+            message: "已取消删除"
+          });
+        });
+    },
+    // 显示角色分配弹出框
+    async rolsShow(id){
+      this.dialogRolFormVisible=true
+      // 获取用户角色信息
+      const res0= await this.$axios.get(`users/${id}`)
+      // console.log(res0)
+      this.form1=res0.data.data
+
+      // 获取角色列表
+      const res= await this.$axios.get('roles')
+      // console.log(res)
+      const {data,meta:{msg,status}}=res.data
+      if(status==200){
+        this.roleList=data
+      }
+    },
+    //分配角色
+    async disRole(){
+      const res=await this.$axios.put(`users/${this.form1.id}/role`,this.form1)
       console.log(res)
-      const {meta:{msg,status}}=res.data
+      const {msg,status}=res.data.meta
       if(status==200){
         this.$message.success(msg)
-        this.dialogEditFormVisible=false
-        this.getUsers()
+        this.dialogRolFormVisible=false
       } else {
         this.$message.error(msg)
       }
-    },
-
-
-
-    // 搜索用户
-    searchUser(){
-        this.getUsers()
-    },
-    // 清空搜索关键字
-    clearWords(){
-        this.query=''
-        this.getUsers()
-    },
-    // 删除用户
-    delUser(id){
-        this.$confirm('此操作将永久删除该文件, 是否继续?', '提示', {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
-          type: 'warning'
-        }).then( async () => {
-          const res = await this.$axios.delete(`users/${id}`)
-          const {meta:{msg,status}}=res.data
-          console.log(status)
-          if(status==200){
-              this.$message({
-              type: 'success',
-              message: '删除成功!'
-            })
-          // 更新页面
-          this.getUsers()
-          }
-
-        }).catch(() => {
-          this.$message({
-            type: 'info',
-            message: '已取消删除'
-          })        
-        });
-
-      
     }
-
 
   },
   mounted() {
