@@ -16,6 +16,9 @@ import myAxios from './plugin/myAxios.js'
 // 引入moment
 import moment from 'moment'
 
+// 引入公共面包屑组件
+import myBread from './components/custom/myBread.vue'
+
 Vue.use(myAxios)
 Vue.use(moment)
 
@@ -23,6 +26,10 @@ Vue.use(moment)
 Vue.filter('fmtdate',(v)=>{
   return moment(v).format('YYYY-MM-DD')
 })
+
+// 注册组件
+Vue.component(myBread.name,myBread)
+
 
 // 关闭开发模式
 Vue.config.productionTip = false

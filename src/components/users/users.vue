@@ -222,9 +222,7 @@ export default {
     // pagenum	当前页码	不能为空
     // pagesize	每页显示条数	不能为空
     async getUsers() {
-      var AUTH_TOKEN = localStorage.getItem("token");
-      // 需要授权的 API ，必须在请求头中使用 Authorization 字段提供 token 令牌
-      this.$axios.defaults.headers.common["Authorization"] = AUTH_TOKEN;
+      // token令牌封装
       const res = await this.$axios.get(
         `users?query=${this.query}&pagenum=${this.pagenum}&pagesize=${
           this.pagesize
