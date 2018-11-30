@@ -71,7 +71,7 @@ export default {
     // 获取侧边栏导航
     async getAside() {
       const res = await this.$axios.get("menus");
-      console.log(res);
+      // console.log(res);
       this.menus=res.data.data
     }
   },
