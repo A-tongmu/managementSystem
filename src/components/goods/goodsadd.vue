@@ -57,11 +57,13 @@
 
       <el-tab-pane name="4" label="商品图片">
         <el-upload
+          :headers="headers"
           multiple
           class="upload-demo"
-          action="https://jsonplaceholder.typicode.com/posts/"
+          action="http://localhost:8888/api/private/v1/upload"
           :on-preview="handlePreview"
           :on-remove="handleRemove"
+          :on-success="handleSuccess"
           :before-upload="beforeAvatarUpload"
           list-type="picture"
         >
@@ -95,7 +97,7 @@ export default {
         goods_number: "",
         goods_cat: "",
         goods_introduce: "",
-        pics: "",
+        pics: [],
         attrs: []
       },
       //   当前选择的进度
@@ -109,6 +111,10 @@ export default {
         value: "cat_id",
         label: "cat_name",
         children: "children"
+      },
+      // 请求头
+      headers:{
+         'Authorization':localStorage.getItem("token")
       }
     };
   },
@@ -131,12 +137,33 @@ export default {
       this.options = res.data.data;
     },
     // 文件上传
+    // fileList:上传多个文件时的文件列表信息
+    // file：单个文件信息
+    handleSuccess(response, file, fileList){
+      // console.log(response , file, fileList);
+      if(file.status=='success'){
+        // file.response.data.tmp_path 临时路径
+        var tmp_upPath=file.response.data.tmp_path
+        this.form.pics.push({"pic":tmp_upPath})
+      }
+    },
+    // 文件移除
     handleRemove(file, fileList) {
       console.log(file, fileList);
+      var tmp_removePath=file.response.data.tmp_path
+      var index = this.form.pics.findIndex((item)=>{
+        return item.pic==tmp_removePath
+      })
+      this.form.pics.splice(index,1)
+      console.log(this.form.pics)
+
     },
+    // 点击文件列表中已上传的文件时的钩子
     handlePreview(file) {
       console.log(file);
     },
+    
+
     // 设置上传类型和大小
     beforeAvatarUpload(file) {
         // const isJPG = file.type === 'image/jpeg';
