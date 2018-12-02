@@ -13,29 +13,221 @@
     ></el-alert>
 
     <!-- 选择商品 -->
-  <el-form :model="form" label-position="right">
-    <el-form-item label="请选择商品分类" label-width="120px">
-      <el-select v-model="form.region" placeholder="请选择活动区域">
-        <el-option label="区域一" value="shanghai"></el-option>
-        <el-option label="区域二" value="beijing"></el-option>
-      </el-select>
-    </el-form-item>
-  </el-form>
+    <el-form :model="form" label-position="right">
+      <el-form-item label="选择商品分类">
+        <div class="block">
+          <el-cascader
+            expand-trigger="hover"
+            :show-all-levels="false"
+            :options="options"
+            :props="props"
+            v-model="selectedOptions"
+            @change="handleChange"
+          ></el-cascader>
+        </div>
+      </el-form-item>
+    </el-form>
+
+    <!-- tab栏 -->
+    <el-tabs v-model="active" @tab-click="handleClick">
+      <!-- 动态参数 -->
+      <el-tab-pane label="动态参数" name="first">
+        <el-button size="mini" type="primary" :disabled="arrDyParam.length!=0?false:true">设置动态参数</el-button>
+        <el-table :data="arrDyParam" stripe style="width: 100%" height="280">
+          <el-table-column type="expand">
+            <template slot-scope="props">
+              <el-form label-position="left" inline class="demo-table-expand">
+                <el-form-item>
+                  <!-- 添加属性 -->
+                  <el-tag
+                    :key="tag"
+                    v-for="tag in props.row.attr_vals"
+                    closable
+                    :disable-transitions="false"
+                    @close="handleClose(tag)"
+                  >{{tag}}</el-tag>
+                  <el-input
+                    class="input-new-tag"
+                    v-if="inputVisible"
+                    v-model="inputValue"
+                    ref="saveTagInput"
+                    size="small"
+                    @keyup.enter.native="handleInputConfirm"
+                    @blur="handleInputConfirm"
+                  ></el-input>
+                  <el-button v-else class="button-new-tag" size="small" @click="showInput">+ New Tag</el-button>
+                </el-form-item>
+              </el-form>
+            </template>
+          </el-table-column>
+          <el-table-column label="#" width="50"></el-table-column>
+          <el-table-column prop="attr_name" label="属性名称" width="180"></el-table-column>
+          <el-table-column label="操作">
+            <template slot-scope="scope">
+              <el-row>
+                <!-- 编辑 -->
+                <el-button plain size="mini" type="primary" icon="el-icon-edit" circle></el-button>
+                <!-- 删除 -->
+                <el-button plain size="mini" type="danger" icon="el-icon-delete" circle></el-button>
+              </el-row>
+            </template>
+          </el-table-column>
+        </el-table>
+      </el-tab-pane>
+      <!-- 静态参数 -->
+      <el-tab-pane label="静态参数" name="second">
+        <el-button size="mini" type="primary" :disabled="arrStaticParam.length!=0?false:true">设置静态参数</el-button>
+        <el-table :data="arrStaticParam" stripe style="width: 100%" height="280">
+          <el-table-column type="index" label="#" width="50"></el-table-column>
+          <el-table-column prop="attr_name" label="属性名称" width="180"></el-table-column>
+          <el-table-column prop="attr_vals" label="属性值" width="180"></el-table-column>
+          <el-table-column label="操作">
+            <template slot-scope="scope">
+              <el-row>
+                <!-- 编辑 -->
+                <el-button plain size="mini" type="primary" icon="el-icon-edit" circle></el-button>
+                <!-- 删除 -->
+                <el-button plain size="mini" type="danger" icon="el-icon-delete" circle></el-button>
+              </el-row>
+            </template>
+          </el-table-column>
+        </el-table>
+      </el-tab-pane>
+    </el-tabs>
   </el-card>
 </template>
 
 <script>
 export default {
-    data () {
-        return {
-            form:{}
+  data() {
+    return {
+      form: {},
+      // 级联选择器
+      options: [],
+      // 默认选中
+      selectedOptions: [],
+      // 配置项
+      props: {
+        value: "cat_id",
+        label: "cat_name",
+        children: "children"
+      },
+      active: "first",
+      // 动态参数选择项
+      arrDyParam: [],
+      // 静态参数选择项
+      arrStaticParam: [],
+      //  表格
+
+      // 添加属性
+       dynamicTags: [],
+      inputVisible: false, //输入框文字是否不可见
+      inputValue: ""  //默认提示文字
+    };
+  },
+  methods: {
+    // 级联选中项改变时触发
+    async handleChange(value) {
+      console.log(value);
+      this.selectedOptions = value;
+
+      // 获取动态参数
+      var id = this.selectedOptions[2];
+      if (this.active == "first") {
+        if (id) {
+          const res = await this.$axios.get(
+            `categories/${id}/attributes?sel=many`
+          );
+          console.log("动态参数");
+          console.log(res);
+          const {
+            data,
+            meta: { msg, status }
+          } = res.data;
+          // 将attr_vals参数处理成数组
+          for (var i = 0; i < data.length; i++) {
+            if (data[i].attr_vals != "") {
+              data[i].attr_vals = data[i].attr_vals.split(",");
+            } else {
+              data[i].attr_vals = [];
+            }
+          }
+          this.arrDyParam = data;
+          console.log(this.arrDyParam);
         }
+      }
+    },
+    // 获取商品分类信息
+    async getCategories() {
+      const res = await this.$axios.get("categories?type=3");
+      // console.log(res);
+      this.options = res.data.data;
+    },
+    // tab栏切换时
+    async handleClick(tab, event) {
+      // console.log(tab, event);
+      if (this.selectedOptions.length != 3) {
+        this.$message.warning("请选择商品的三级分类");
+      }
+      // 获取静态参数
+      var id = this.selectedOptions[2];
+      // 获取静态参数
+      if (this.active == "second") {
+        if (id) {
+          const res1 = await this.$axios.get(
+            `categories/${id}/attributes?sel=only`
+          );
+          console.log("静态参数");
+          this.arrStaticParam = res1.data.data;
+          console.log(this.arrStaticParam)
+        }
+      }
+
+    },
+    // 添加标签相关方法
+    handleClose(tag) {
+      this.dynamicTags.splice(this.dynamicTags.indexOf(tag), 1);
+    },
+
+    showInput() {
+      this.inputVisible = true;
+      this.$nextTick(_ => {
+        this.$refs.saveTagInput.$refs.input.focus();
+      });
+    },
+
+    handleInputConfirm() {
+      let inputValue = this.inputValue;
+      if (inputValue) {
+        this.dynamicTags.push(inputValue);
+      }
+      this.inputVisible = false;
+      this.inputValue = "";
     }
+  },
+  created() {
+    this.getCategories();
+  }
 };
 </script>
 
 <style >
 .box-card {
   height: 100%;
+}
+.el-tag + .el-tag {
+  margin-left: 10px;
+}
+.button-new-tag {
+  margin-left: 10px;
+  height: 32px;
+  line-height: 30px;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+.input-new-tag {
+  width: 90px;
+  margin-left: 10px;
+  vertical-align: bottom;
 }
 </style>
