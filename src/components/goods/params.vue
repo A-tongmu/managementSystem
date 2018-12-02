@@ -120,9 +120,9 @@ export default {
       //  表格
 
       // 添加属性
-       dynamicTags: [],
+      dynamicTags: [],
       inputVisible: false, //输入框文字是否不可见
-      inputValue: ""  //默认提示文字
+      inputValue: "" //默认提示文字
     };
   },
   methods: {
@@ -131,31 +131,35 @@ export default {
       console.log(value);
       this.selectedOptions = value;
 
-      // 获取动态参数
       var id = this.selectedOptions[2];
-      if (this.active == "first") {
-        if (id) {
-          const res = await this.$axios.get(
-            `categories/${id}/attributes?sel=many`
-          );
-          console.log("动态参数");
-          console.log(res);
-          const {
-            data,
-            meta: { msg, status }
-          } = res.data;
-          // 将attr_vals参数处理成数组
-          for (var i = 0; i < data.length; i++) {
-            if (data[i].attr_vals != "") {
-              data[i].attr_vals = data[i].attr_vals.split(",");
-            } else {
-              data[i].attr_vals = [];
-            }
-          }
-          this.arrDyParam = data;
-          console.log(this.arrDyParam);
+      // 获取动态参数
+      const res = await this.$axios.get(`categories/${id}/attributes?sel=many`);
+      console.log("动态参数");
+      console.log(res);
+      const {
+        data,
+        meta: { msg, status }
+      } = res.data;
+      // 将attr_vals参数处理成数组
+      for (var i = 0; i < data.length; i++) {
+        if (data[i].attr_vals != "") {
+          data[i].attr_vals = data[i].attr_vals.split(",");
+        } else {
+          data[i].attr_vals = [];
         }
       }
+      this.arrDyParam = data;
+      console.log(this.arrDyParam);
+
+      // 获取静态参数
+      var id = this.selectedOptions[2];
+      // 获取静态参数
+      const res1 = await this.$axios.get(
+        `categories/${id}/attributes?sel=only`
+      );
+      console.log("静态参数");
+      this.arrStaticParam = res1.data.data;
+      console.log(this.arrStaticParam);
     },
     // 获取商品分类信息
     async getCategories() {
@@ -168,21 +172,8 @@ export default {
       // console.log(tab, event);
       if (this.selectedOptions.length != 3) {
         this.$message.warning("请选择商品的三级分类");
+        return;
       }
-      // 获取静态参数
-      var id = this.selectedOptions[2];
-      // 获取静态参数
-      if (this.active == "second") {
-        if (id) {
-          const res1 = await this.$axios.get(
-            `categories/${id}/attributes?sel=only`
-          );
-          console.log("静态参数");
-          this.arrStaticParam = res1.data.data;
-          console.log(this.arrStaticParam)
-        }
-      }
-
     },
     // 添加标签相关方法
     handleClose(tag) {
