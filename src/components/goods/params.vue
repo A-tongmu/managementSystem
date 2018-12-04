@@ -44,7 +44,7 @@
                     v-for="tag in props.row.attr_vals"
                     closable
                     :disable-transitions="false"
-                    @close="handleClose(tag)"
+                    @close="handleClose(tag,props.row)"
                   >{{tag}}</el-tag>
                   <el-input
                     class="input-new-tag"
@@ -52,8 +52,8 @@
                     v-model="inputValue"
                     ref="saveTagInput"
                     size="small"
-                    @keyup.enter.native="handleInputConfirm"
-                    @blur="handleInputConfirm"
+                    @keyup.enter.native="handleInputConfirm(props.row)"
+                    @blur="handleInputConfirm(props.row)"
                   ></el-input>
                   <el-button v-else class="button-new-tag" size="small" @click="showInput">+ New Tag</el-button>
                 </el-form-item>
@@ -176,21 +176,45 @@ export default {
       }
     },
     // 添加标签相关方法
-    handleClose(tag) {
-      this.dynamicTags.splice(this.dynamicTags.indexOf(tag), 1);
+    async handleClose(tag,dyParam) {
+      dyParam.attr_vals.splice(dyParam.attr_vals.indexOf(tag), 1);
+      // 删除参数
+      var form={
+          attr_name:dyParam.attr_name,
+          attr_sel:'many',
+          attr_vals:dyParam.attr_vals.join(',')
+        }
+        const res = await this.$axios.post(`categories/${dyParam.attr_id}/attributes`,form)
+        console.log(res)
     },
 
     showInput() {
       this.inputVisible = true;
+      // 获取dom最新数据
       this.$nextTick(_ => {
         this.$refs.saveTagInput.$refs.input.focus();
       });
     },
 
-    handleInputConfirm() {
+    async handleInputConfirm(dyParam) {
+      console.log(dyParam)
       let inputValue = this.inputValue;
       if (inputValue) {
-        this.dynamicTags.push(inputValue);
+        dyParam.attr_vals.push(inputValue);
+
+        // 发送请求
+        // :id	分类 ID	不能为空携带在url中
+        // attr_name	参数名称	不能为空
+        // attr_sel	[only,many]	不能为空
+        // attr_vals	如果是 many 就需要填写值的选项，以逗号分隔
+        var form={
+          attr_name:dyParam.attr_name,
+          attr_sel:'many',
+          attr_vals:dyParam.attr_vals.join(',')
+        }
+        const res = await this.$axios.post(`categories/${dyParam.attr_id}/attributes`,form)
+        console.log(res)
+
       }
       this.inputVisible = false;
       this.inputValue = "";

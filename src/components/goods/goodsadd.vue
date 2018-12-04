@@ -91,12 +91,8 @@
       </el-tab-pane>
 
       <el-tab-pane class="pane" name="5" label="商品内容">
-        <el-button type="primary" plain>添加商品</el-button>
-        <quill-editor
-          v-model="content"
-          ref="myQuillEditor"
-          :options="editorOption"
-        ></quill-editor>
+        <el-button type="primary" plain @click="addGoods()">添加商品</el-button>
+        <quill-editor v-model="form.goods_introduce" ref="myQuillEditor" :options="editorOption"></quill-editor>
       </el-tab-pane>
     </el-tabs>
   </el-card>
@@ -153,12 +149,14 @@ export default {
       arrDyParam: [],
       // 静态参数选择项
       arrStaticParam: [],
-      // 富文本编辑器
-      content: "",
+
       editorOption: {
         // 一些配置项
-        placeholder:"商品内容..."
-      }
+        placeholder: "商品内容..."
+      },
+      // 静态、动态数据单次获取
+      dyTmp: true,
+      staticTmp: true
     };
   },
   methods: {
@@ -168,15 +166,14 @@ export default {
         this.$message.warning("请选择商品的三级分类");
         return;
       }
-      // 获取动态参数
       var id = this.selectedOptions[2];
-      if (this.active == "2") {
-        if (id) {
+      // 获取动态参数
+      if (this.dyTmp) {
+        if (this.active == "2") {
           const res = await this.$axios.get(
             `categories/${id}/attributes?sel=many`
           );
-          console.log("动态参数");
-          console.log(res);
+
           const {
             data,
             meta: { msg, status }
@@ -186,7 +183,7 @@ export default {
             if (data[i].attr_vals != "") {
               data[i].attr_vals = data[i].attr_vals.split(",");
               data[i].attr_vals.forEach(element => {
-                this.checkList.push(element)
+                this.checkList.push(element);
               });
             } else {
               data[i].attr_vals = [];
@@ -194,17 +191,22 @@ export default {
           }
 
           this.arrDyParam = data;
+          console.log("动态参数数组");
+          console.log(this.arrDyParam);
+          this.dyTmp = false;
         }
       }
       // 获取静态参数
-      if (this.active == "3") {
-        if (id) {
+      if (this.staticTmp) {
+        if (this.active == "3") {
           const res1 = await this.$axios.get(
             `categories/${id}/attributes?sel=only`
           );
-          console.log("静态参数");
-          console.log(res1);
+
           this.arrStaticParam = res1.data.data;
+          console.log("静态参数");
+          console.log(this.arrStaticParam);
+          this.staticTmp = false;
         }
       }
     },
@@ -256,6 +258,45 @@ export default {
         this.$message.error("图片大小不能超过 2MB!");
       }
       return isLt2M;
+    },
+    // 添加商品
+    async addGoods() {
+      //this.form 级联选择selectedOptions 动态checkList 静态arrStaticParam
+      //动态arrDyParam
+      this.form.goods_cat = this.selectedOptions.join(",");
+
+      // 静态参数
+      var arr1 = this.arrStaticParam.map(item => {
+        return { attr_id: item.attr_id, attr_value: item.attr_vals };
+      });
+      //动态参数
+      var arr2 = this.arrDyParam.map(item => {
+        return { attr_id: item.attr_id, attr_value: item.attr_vals };
+      });
+      // 去除掉取消的选项，转换为逗号分隔的字符串
+      var checkList = this.checkList;
+      arr2.forEach(element => {
+        var str = "";
+        element.attr_value = element.attr_value.join(",");
+        checkList.forEach(element1 => {
+          if (element.attr_value.indexOf(element1) != 0) {
+            str += element1 + ",";
+          }
+        });
+        str.slice(0, -1);
+        element.attr_value = str;
+      });
+      this.form.attrs = [...arr1, ...arr2];
+
+      // 提交数据
+      const res = await this.$axios.post("goods", this.form);
+      console.log(res);
+      if(res.data.meta.status==201){
+        this.$message.success('添加成功')
+        this.$router.push({name:'goods'})
+      } else {
+        this.$message.error(res.data.meta.msg)
+      }
     }
   },
   created() {
@@ -277,25 +318,23 @@ export default {
   overflow: auto;
 }
 .quill-editor {
- height: 240px;
- 
- 
+  height: 240px;
 }
 .ql-container {
- height: 200px;
- }
+  height: 200px;
+}
 .limit {
- height: 30px;
- border: 1px solid #ccc;
- line-height: 30px;
- text-align: right;
+  height: 30px;
+  border: 1px solid #ccc;
+  line-height: 30px;
+  text-align: right;
 }
- 
+
 .ql-snow .ql-editor img {
- max-width: 480px;
+  max-width: 480px;
 }
- 
+
 .ql-editor .ql-video {
- max-width: 480px;
+  max-width: 480px;
 }
 </style>

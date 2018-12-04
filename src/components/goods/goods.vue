@@ -22,7 +22,8 @@
     </div>
 
     <!-- 表格 -->
-    <el-table :data="goodsData" height="340" border style="width: 100%">
+    <el-table :data="goodsData" height="340" 
+    border style="width: 100%" v-loading="loading">
       <el-table-column type="index" :index='testIndex()' label="#" width="50"></el-table-column>
       <el-table-column prop="goods_name" label="商品名称" width="600"></el-table-column>
       <el-table-column prop="goods_price" label="商品价格(元)"></el-table-column>
@@ -40,7 +41,8 @@
             <!-- 编辑 -->
             <el-button plain size="mini" type="primary" icon="el-icon-edit" circle></el-button>
             <!-- 删除 -->
-            <el-button plain size="mini" type="danger" icon="el-icon-delete" circle></el-button>
+            <el-button plain size="mini" type="danger" icon="el-icon-delete" 
+            circle @click="delGood(scope.row.goods_id)"></el-button>
           </el-row>
         </template>
       </el-table-column>
@@ -73,7 +75,9 @@ export default {
       // 当前页面
       pagenum:1,
       // 每页条数
-      pagesize:50
+      pagesize:50,
+      // 加载动画
+      loading:true
     };
   },
 
@@ -108,6 +112,7 @@ export default {
 
       if (status == 200) {
         this.goodsData = data.goods;
+        this.loading=false
       }
     },
     // 搜索商品
@@ -115,6 +120,16 @@ export default {
     // 添加商品
     addGoodsShow() {
       this.$router.push({name:'goodsadd'})
+    },
+    // 删除商品
+    async delGood(id){
+      const res = await this.$axios.delete(`goods/${id}`)
+      console.log(res)
+      const {msg,status}=res.data.meta
+      if(status==200){
+        this.getGoods()
+      }
+      this.$message.error(msg)
     }
   },
   mounted() {
