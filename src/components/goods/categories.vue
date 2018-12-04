@@ -186,8 +186,6 @@ export default {
         this.form.name = "";
         this.selectedOptions = [];
         this.getCategories()
-      } else {
-        this.$message.error(res.data.meta.msg);
       }
     }
   },

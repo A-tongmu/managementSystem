@@ -1,24 +1,25 @@
 // 配置路由
 import Vue from 'vue'
-import Router from 'vue-router'
-Vue.use(Router)
+import VueRouter from 'vue-router'
+Vue.use(VueRouter)
 // 引入组件
-import login from '@/components/login/login.vue'
-import home from '@/components/home/home.vue'
-import users from '@/components/users/users.vue'
-import right from '@/components/rights/right.vue'
-import role from '@/components/rights/role.vue'
-import goods from '@/components/goods/goods.vue'
-import params from '@/components/goods/params.vue'
-import categories from '@/components/goods/categories.vue'
-import goodsadd from '@/components/goods/goodsadd.vue'
-import orders from '@/components/order/orders.vue'
-import reports from '@/components/reports/reports.vue'
+// 路由懒加载 const Foo = () => import('./Foo.vue')
+const login = () => import  ('@/components/login/login.vue')
+const home = () => import  ('@/components/home/home.vue')
+const users = () => import  ('@/components/users/users.vue')
+const right = () => import  ('@/components/rights/right.vue')
+const role = () => import  ('@/components/rights/role.vue')
+const goods = () => import  ('@/components/goods/goods.vue')
+const params = () => import  ('@/components/goods/params.vue')
+const categories = () => import  ('@/components/goods/categories.vue')
+const goodsadd = () => import  ('@/components/goods/goodsadd.vue')
+const orders = () => import  ('@/components/order/orders.vue')
+const reports = () => import  ('@/components/reports/reports.vue')
 
 
 import {Message} from 'element-ui'
 
-const router = new Router({
+const router = new VueRouter({
   routes: [{
       name: 'login',
       path: '/login',

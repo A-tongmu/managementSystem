@@ -4,8 +4,7 @@ import Vue from 'vue'
 import App from './App'
 import router from './router/router.js'
 
-import ElementUI from 'element-ui'
-import '../node_modules/element-ui/lib/theme-chalk/index.css'
+import ELEMENT from 'element-ui'
 
 // 引入样式
 import './assets/css/base.css'
@@ -34,7 +33,7 @@ Vue.component(myBread.name,myBread)
 // 关闭开发模式
 Vue.config.productionTip = false
 
-Vue.use(ElementUI)
+Vue.use(ELEMENT)
 
 new Vue({
   el: '#app',
